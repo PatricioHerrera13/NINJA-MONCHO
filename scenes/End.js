@@ -8,12 +8,12 @@ export default class Game extends Phaser.Scene {
     }
     create() {
         this.add
-        .text(400, 300, this.gameOver ? "Game Over":"You Win", {
+          .text(400, 300, this.gameOver ? "Game Over" : "You Win", {
             fontSize: "40px",
-            color: "#ffffff"
-        })
-        .setOrigin(0.5);
-
-     this.add.text(400, 350, `Score: ${this.score}`);
-    }
+            color: "#ffffff",
+          })
+          .setOrigin(0.5);
+    
+        this.add.text(400, 350, `Score: ${this.score}`);
+      }
 }
