@@ -154,6 +154,7 @@ export default class Game extends Phaser.Scene {
 
     this.chechWin();
   }
+  
 
     chechWin(){
       const cumplePuntos = this.score >= 100;
