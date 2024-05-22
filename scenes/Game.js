@@ -7,7 +7,16 @@ export default class Game extends Phaser.Scene {
     super("main");
   }
 
-  init() {}
+  init() {
+    this.gameOver = false;
+    this.timer = 30;
+    this.score = 0;
+    this.shapes = {
+      triangulo: { points: 10, count:0},
+      cuadrado: { points: 20, count:0},
+      rombo: { points: 30, count:0},
+    };
+  }
 
   preload() {
     ///cargar assets 
@@ -22,6 +31,9 @@ export default class Game extends Phaser.Scene {
     this.load.image ("personaje","../public/assets/Ninja.png");
 
     //crear grupo y asignar imagenes
+    this.load.image  ("triangulo",)
+    this.load.image  ("cuadrado",)
+    this.load.image  ("rombo",)
   }
 
   create() {
@@ -43,12 +55,24 @@ export default class Game extends Phaser.Scene {
     //agregar colision entre personaje y plataforma
     this.physics.add.collider(this.personaje, this.plataformas);
 
-    //crar teclas
+    //crgarar teclas
     this.cursor = this.input.keyboard.createCursorKeys();
 
-    //crarr grupo recolectables
+    //cargar grupo recolectables
     this.recolectables = this.physics.add.group();
     this.physics.add.collider(this.personaje, this,this.recolectables);
+    this.physics.add.collider(this.personaje, this,this.recolectables);
+
+    //add tecla r 
+    this.r = this.input.keyboard.addKey(Phaser.input.Keyboard.KeyCodes.R);
+
+    //evento 1 second 
+    this.timer.addEvent({
+      delay: 1000,
+      callback: this.handlerTaimer,
+      callbackScope: this,
+      loop: true,
+    });
 
     //evento 1 segundo
     this.time.addEvent({
@@ -57,6 +81,21 @@ export default class Game extends Phaser.Scene {
       callbackScope: this,
       loop: true,
     });
+    
+    //agergar texto de timer en la esquina superior derecha
+    this.timerText = this.add.text (10, 10, `tiempo restante: ${this.timer}`,{
+      fontSize: "32px",
+      fill: "#fff",
+    });
+
+    this.scoreText = this.add.text(
+      10,
+      50,
+      `Puntaje: ${this.score}
+      T: ${this.shapes["triangulo"].count}
+      C: ${this.shapes["cuadrado"].count}
+      R: ${this.shapes["rombo"].count}`
+    );
   }
 
   onSecond () {
@@ -72,6 +111,15 @@ export default class Game extends Phaser.Scene {
   }
 
   update() {
+    if (this.gameOver  && this.recolectables.isDown){
+      this.scene.restart();
+    }
+    if (this.gameOver){
+      this.physics.pause();
+      this.timerText.setText("Game Over");
+      return;
+    }
+
     // movimiento personaje
     if (this.cursor.left.isDown) {
       this.personaje.setVelocityX(-160);
@@ -82,6 +130,52 @@ export default class Game extends Phaser.Scene {
     }
     if (this.cursor.up.isDown && this.personaje.body.touching.down) {
       this.personaje.setVelocityY(-330);
+    }
+  }
+
+  onShapeCollect (personaje, recolectable) {
+    recolectable.log("recolectado", recolectable.texture.key);
+    const nombreFig = recolectable.texture.key;
+
+    this.score += this.shapes[nombreFig].points;
+    this.shapes[nombreFig].count += 1;
+
+    console.table(this.shapes);
+    console.log("score", this.score);
+    recolectable.destroy();
+    //recolectable.disbleBody(true, true);
+
+    this.scoreText = this.add.text(
+      `Puntaje: ${this.score}
+      T: ${this.shapes["triangulo"].count}
+      C: ${this.shapes["cuadrado"].count}
+      R: ${this.shapes["rombo"].count}`
+    );
+
+    this.chechWin();
+  }
+
+    chechWin(){
+      const cumplePuntos = this.score >= 100;
+    const cumpleFiguras =
+    this.shapes["triangulo"].count >= 2 &&
+    this.shapes["cuadrado"].count >= 2 &&
+    this.shapes["rombo"].count >= 2;
+
+    if (cumplePuntos && cumpleFiguras) {
+      console.log("Ganaste");
+      this.scene.start("End",{
+        score: this.score,
+        gameOver: this.gameOver,
+      });
+  } 
+ }
+
+  handlerTaimer() {
+    this.timer -= 1;
+    this.timerText.setText(`tiempo restante: ${this.timer}`);
+    if (this.time === 0) {
+      this.gameOver = true;
     }
   }
 }
