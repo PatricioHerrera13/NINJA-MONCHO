@@ -31,9 +31,9 @@ export default class Game extends Phaser.Scene {
     this.load.image ("personaje","../public/assets/Ninja.png");
 
     //crear grupo y asignar imagenes
-    this.load.image  ("triangulo",)
-    this.load.image  ("cuadrado",)
-    this.load.image  ("rombo",)
+    this.load.image("triangulo", "../public/assets/triangle.png");
+    this.load.image("cuadrado", "../public/assets/square.png");
+    this.load.image("rombo", "../public/assets/diamond.png");
   }
 
   create() {
@@ -45,7 +45,8 @@ export default class Game extends Phaser.Scene {
     this.plataformas = this.physics.add.staticGroup();
     //cargar al grupo de plataformas agregar una plataforma
     this.plataformas.create(400, 560, "plataforma").setScale(2).refreshBody();
-
+    //agregar otra plataforma en otro lugar
+    this.plataformas.create(200, 400, "plataforma");
 
     //crear personaje
     this.personaje = this.physics.add.sprite(400, 300, "personaje");
@@ -60,24 +61,22 @@ export default class Game extends Phaser.Scene {
 
     //cargar grupo recolectables
     this.recolectables = this.physics.add.group();
-    this.physics.add.collider(this.personaje, this,this.recolectables);
-    this.physics.add.collider(this.personaje, this,this.recolectables);
 
-    //add tecla r 
-    this.r = this.input.keyboard.addKey(Phaser.input.Keyboard.KeyCodes.R);
-
-    //evento 1 second 
-    this.timer.addEvent({
+    // evento 1 segundo
+    this.time.addEvent({
       delay: 1000,
-      callback: this.handlerTaimer,
+      callback: this.onSecond,
       callbackScope: this,
       loop: true,
     });
+    
+    //add tecla r 
+    this.r = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
 
-    //evento 1 segundo
+    // evento 1 segundo
     this.time.addEvent({
       delay: 1000,
-      callback: console.log("hola"),
+      callback: this.handlerTimer,
       callbackScope: this,
       loop: true,
     });
@@ -96,18 +95,15 @@ export default class Game extends Phaser.Scene {
       C: ${this.shapes["cuadrado"].count}
       R: ${this.shapes["rombo"].count}`
     );
-  }
-
-  onSecond () {
-    //crear recolectable
-    const tipos = ["triangulo","cuadrado","rombo"];
-    const tipo = Phaser.Math.RND.pick(tipos);
-    let recolectable = this.recolectables.create(
-      Physics.Math.Between(10, 790),
-      0,
-      tipo
+   
+    //agregar collider entre recolectables y personaje
+    this.physics.add.collider(
+      this.personaje,
+      this.recolectables,
+      this.onShapeCollect,
+      null,
+      this
     );
-    recolectable.setVelocity(0, 100);
   }
 
   update() {
@@ -119,7 +115,6 @@ export default class Game extends Phaser.Scene {
       this.timerText.setText("Game Over");
       return;
     }
-
     // movimiento personaje
     if (this.cursor.left.isDown) {
       this.personaje.setVelocityX(-160);
@@ -133,8 +128,23 @@ export default class Game extends Phaser.Scene {
     }
   }
 
+  onSecond () {
+    if (this.gameOver){
+      return;
+    }
+    //crear recolectable
+    const tipos = ["triangulo","cuadrado","rombo"];
+    const tipo = Phaser.Math.RND.pick(tipos);
+    let recolectable = this.recolectables.create(
+      Phaser.Math.Between(10, 790),
+      0,
+      tipo
+    );
+    recolectable.setVelocity(0, 100);
+  }
+
   onShapeCollect (personaje, recolectable) {
-    recolectable.log("recolectado", recolectable.texture.key);
+    console.log("recolectado", recolectable.texture.key);
     const nombreFig = recolectable.texture.key;
 
     this.score += this.shapes[nombreFig].points;
@@ -145,7 +155,7 @@ export default class Game extends Phaser.Scene {
     recolectable.destroy();
     //recolectable.disbleBody(true, true);
 
-    this.scoreText = this.add.text(
+    this.scoreText.setText(
       `Puntaje: ${this.score}
       T: ${this.shapes["triangulo"].count}
       C: ${this.shapes["cuadrado"].count}
@@ -154,29 +164,32 @@ export default class Game extends Phaser.Scene {
 
     this.chechWin();
   }
-  
 
-    chechWin(){
+  chechWin(){
       const cumplePuntos = this.score >= 100;
-    const cumpleFiguras =
-    this.shapes["triangulo"].count >= 2 &&
-    this.shapes["cuadrado"].count >= 2 &&
-    this.shapes["rombo"].count >= 2;
+      const cumpleFiguras =
+        this.shapes["triangulo"].count >= 2 &&
+        this.shapes["cuadrado"].count >= 2 &&
+        this.shapes["rombo"].count >= 2;
 
     if (cumplePuntos && cumpleFiguras) {
       console.log("Ganaste");
-      this.scene.start("End",{
+      this.scene.start("end",{
         score: this.score,
         gameOver: this.gameOver,
       });
-  } 
- }
+    } 
+  }
 
   handlerTaimer() {
     this.timer -= 1;
     this.timerText.setText(`tiempo restante: ${this.timer}`);
     if (this.time === 0) {
       this.gameOver = true;
+      this.scene.start("end", {
+        score: this.score,
+        gameOver: this.gameOver,
+      });
     }
   }
 }
