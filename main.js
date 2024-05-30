@@ -1,6 +1,5 @@
 import Game from "./scenes/Game.js";
 import End from "./scenes/End.js";
-
 // Create a new Phaser config object
 const config = {
   type: Phaser.AUTO,
@@ -22,7 +21,7 @@ const config = {
     default: "arcade",
     arcade: {
       gravity: { y: 200 },
-      debug: true,
+      debug: false,
     },
   },
   // List of scenes to load
@@ -30,6 +29,5 @@ const config = {
   // Remember to import the scene before adding it to the list
   scene: [Game, End],
 };
-
 // Create a new Phaser game instance
 window.game = new Phaser.Game(config);

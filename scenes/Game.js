@@ -10,118 +10,97 @@ export default class Game extends Phaser.Scene {
     this.timer = 30;
     this.score = 0;
     this.shapes = {
-      triangulo: { points: 10, count: 0 },
-      cuadrado: { points: 20, count: 0 },
-      rombo: { points: 30, count: 0 },
+      triangle: { points: 10, count: 0 },
+      square: { points: 20, count: 0 },
+      diamond: { points: 30, count: 0 },
       bomb: { points: -10, count: 0 },
     };
   }
 
   preload() {
-    //cargar assets
-
-    //import Cielo
-    this.load.image("cielo", "../public/assets/Cielo.webp");
-
-    //import plataforma
-    this.load.image("plataforma", "../public/assets/platform.png");
-
-    //import personaje
-    this.load.image("personaje", "../public/assets/Ninja.png");
-
-    // importar recolectable
-    this.load.image("triangulo", "../public/assets/triangle.png");
-    this.load.image("cuadrado", "../public/assets/square.png");
-    this.load.image("rombo", "../public/assets/diamond.png");
+    // Load assets
+    // Import Sky
+    this.load.image("sky", "../public/assets/Cielo.webp");
+    // Import Platform
+    this.load.image("platform", "../public/assets/platform.png");
+    // Import Character
+    this.load.image("character", "../public/assets/Ninja.png");
+    // Import Collectibles
+    this.load.image("triangle", "../public/assets/triangle.png");
+    this.load.image("square", "../public/assets/square.png");
+    this.load.image("diamond", "../public/assets/diamond.png");
     this.load.image("bomb", "../public/assets/R.png");
   }
 
   create() {
-    // crear elementos
-    this.cielo = this.add.image(400, 300, "cielo");
-    this.cielo.setScale(2);
-
-    // crear grupa plataformas
-    this.plataformas = this.physics.add.staticGroup();
-    // al grupo de plataformas agregar una plataforma
-    this.plataformas.create(400, 568, "plataforma").setScale(2).refreshBody();
-    // agregamos otra plataforma en otro lugar
-    this.plataformas.create(200, 400, "plataforma");
-
-    //crear personaje
-    this.personaje = this.physics.add.sprite(400, 300, "personaje");
-    this.personaje.setScale(0.1);
-    this.personaje.setCollideWorldBounds(true);
-
-    //agregar colision entre personaje y plataforma
-    this.physics.add.collider(this.personaje, this.plataformas);
-    //una tecla a la vez
-    //this.w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-    //this.a = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-    //this.s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-    //this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-
-    //crear teclas
-    this.cursor = this.input.keyboard.createCursorKeys();
-
-    // crear grupo recolectables
-    this.recolectables = this.physics.add.group();
-
-    // evento 1 segundo
+    // Create elements
+    this.sky = this.add.image(400, 300, "sky");
+    this.sky.setScale(2);
+    // Create platforms group
+    this.platforms = this.physics.add.staticGroup();
+    // Add a platform to the group
+    this.platforms.create(400, 568, "platform").setScale(2).refreshBody();
+    // Add another platform at a different position
+    this.platforms.create(200, 400, "platform");
+    // Create character
+    this.character = this.physics.add.sprite(400, 300, "character");
+    this.character.setScale(0.1);
+    this.character.setCollideWorldBounds(true);
+    // Add collision between character and platform
+    this.physics.add.collider(this.character, this.platforms);
+    // Create cursor keys
+    this.cursors = this.input.keyboard.createCursorKeys();
+    // Create collectibles group
+    this.collectibles = this.physics.add.group();
+    // 1-second event
     this.time.addEvent({
       delay: 1000,
       callback: this.onSecond,
       callbackScope: this,
       loop: true,
     });
-
-    // add tecla r
-    this.r = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
-
-    // evento 1 segundo
+    // Add 'R' key
+    this.rKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
+    // 1-second event for timer
     this.time.addEvent({
       delay: 1000,
-      callback: this.handlerTimer,
+      callback: this.handleTimer,
       callbackScope: this,
       loop: true,
     });
-
-    //agregar texto de timer en la esquina superior derecha
-    this.timerText = this.add.text(10, 10, `tiempo restante: ${this.timer}`, {
+    // Add timer text in the top-right corner
+    this.timerText = this.add.text(10, 10, `Time left: ${this.timer}`, {
       fontSize: "32px",
       fill: "#fff",
     });
-
     this.scoreText = this.add.text(
       10,
       50,
-      `Puntaje: ${this.score}
-        T: ${this.shapes["triangulo"].count}
-        C: ${this.shapes["cuadrado"].count}
-        R: ${this.shapes["rombo"].count}`
+      `Score: ${this.score}
+        T: ${this.shapes["triangle"].count}
+        S: ${this.shapes["square"].count}
+        D: ${this.shapes["diamond"].count}`
     );
-
-    //agregar collider entre recolectables y personaje
+    // Add collider between collectibles and character
     this.physics.add.collider(
-      this.personaje,
-      this.recolectables,
+      this.character,
+      this.collectibles,
       this.onShapeCollect,
       null,
       this
     );
-
-    //agregar collider entre recolectables y plataformas
+    // Add collider between collectibles and platforms
     this.physics.add.collider(
-      this.recolectables,
-      this.plataformas,
-      this.onRecolectableBounced,
+      this.collectibles,
+      this.platforms,
+      this.onCollectibleBounced,
       null,
       this
     );
   }
 
   update() {
-    if (this.gameOver && this.r.isDown) {
+    if (this.gameOver && this.rKey.isDown) {
       this.scene.restart();
     }
     if (this.gameOver) {
@@ -129,16 +108,16 @@ export default class Game extends Phaser.Scene {
       this.timerText.setText("Game Over");
       return;
     }
-    // movimiento personaje
-    if (this.cursor.left.isDown) {
-      this.personaje.setVelocityX(-160);
-    } else if (this.cursor.right.isDown) {
-      this.personaje.setVelocityX(160);
+    // Character movement
+    if (this.cursors.left.isDown) {
+      this.character.setVelocityX(-160);
+    } else if (this.cursors.right.isDown) {
+      this.character.setVelocityX(160);
     } else {
-      this.personaje.setVelocityX(0);
+      this.character.setVelocityX(0);
     }
-    if (this.cursor.up.isDown && this.personaje.body.touching.down) {
-      this.personaje.setVelocityY(-330);
+    if (this.cursors.up.isDown && this.character.body.touching.down) {
+      this.character.setVelocityY(-330);
     }
   }
 
@@ -146,59 +125,49 @@ export default class Game extends Phaser.Scene {
     if (this.gameOver) {
       return;
     }
-    // crear recolectable
-    const tipos = ["triangulo", "cuadrado", "rombo", "bomb"];
-
-    const tipo = Phaser.Math.RND.pick(tipos);
-    let recolectable = this.recolectables.create(
+    // Create collectible
+    const types = ["triangle", "square", "diamond", "bomb"];
+    const type = Phaser.Math.RND.pick(types);
+    let collectible = this.collectibles.create(
       Phaser.Math.Between(10, 790),
       0,
-      tipo
+      type
     );
-    recolectable.setVelocity(0, 100);
-
-    //asignar rebote: busca un numero entre 0.4 y 0.8
-    const rebote = Phaser.Math.FloatBetween(0.4, 0.8);
-    recolectable.setBounce(rebote);
-
-    //set data
-    recolectable.setData("points", this.shapes[tipo].points);
-    recolectable.setData("tipo", tipo);
+    collectible.setVelocity(0, 100);
+    // Set bounce: find a number between 0.4 and 0.8
+    const bounce = Phaser.Math.FloatBetween(0.4, 0.8);
+    collectible.setBounce(bounce);
+    // Set data
+    collectible.setData("points", this.shapes[type].points);
+    collectible.setData("type", type);
   }
 
-  onShapeCollect(personaje, recolectable) {
-    const nombreFig = recolectable.getData("tipo");
-    const points = recolectable.getData("points");
-
+  onShapeCollect(character, collectible) {
+    const typeName = collectible.getData("type");
+    const points = collectible.getData("points");
     this.score += points;
-
-    this.shapes[nombreFig].count += 1;
-
+    this.shapes[typeName].count += 1;
     console.table(this.shapes);
-    console.log("recolectado ", recolectable.texture.key, points);
-    console.log("score ", this.score);
-    recolectable.destroy();
-    //recolectable.disableBody(true, true);
-
+    console.log("Collected ", collectible.texture.key, points);
+    console.log("Score ", this.score);
+    collectible.destroy();
     this.scoreText.setText(
-      `Puntaje: ${this.score}
-        T: ${this.shapes["triangulo"].count}
-        C: ${this.shapes["cuadrado"].count}
-        R: ${this.shapes["rombo"].count}`
+      `Score: ${this.score}
+        T: ${this.shapes["triangle"].count}
+        S: ${this.shapes["square"].count}
+        D: ${this.shapes["diamond"].count}`
     );
-
     this.checkWin();
   }
 
   checkWin() {
-    const cumplePuntos = this.score >= 100;
-    const cumpleFiguras =
-      this.shapes["triangulo"].count >= 2 &&
-      this.shapes["cuadrado"].count >= 2 &&
-      this.shapes["rombo"].count >= 2;
-
-    if (cumplePuntos && cumpleFiguras) {
-      console.log("Ganaste");
+    const meetsPoints = this.score >= 100;
+    const meetsShapes =
+      this.shapes["triangle"].count >= 2 &&
+      this.shapes["square"].count >= 2 &&
+      this.shapes["diamond"].count >= 2;
+    if (meetsPoints && meetsShapes) {
+      console.log("You won");
       this.scene.start("end", {
         score: this.score,
         gameOver: this.gameOver,
@@ -206,9 +175,9 @@ export default class Game extends Phaser.Scene {
     }
   }
 
-  handlerTimer() {
+  handleTimer() {
     this.timer -= 1;
-    this.timerText.setText(`tiempo restante: ${this.timer}`);
+    this.timerText.setText(`Time left: ${this.timer}`);
     if (this.timer === 0) {
       this.gameOver = true;
       this.scene.start("end", {
@@ -218,13 +187,13 @@ export default class Game extends Phaser.Scene {
     }
   }
 
-  onRecolectableBounced(recolectable, plataforma) {
-    console.log("recolectable rebote");
-    let points = recolectable.getData("points");
+  onCollectibleBounced(collectible, platform) {
+    console.log("Collectible bounced");
+    let points = collectible.getData("points");
     points -= 5;
-    recolectable.setData("points", points);
+    collectible.setData("points", points);
     if (points <= 0) {
-      recolectable.destroy();
+      collectible.destroy();
     }
   }
 }
