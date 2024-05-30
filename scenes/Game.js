@@ -33,7 +33,7 @@ export default class Game extends Phaser.Scene {
     this.load.image("triangulo", "../public/assets/triangle.png");
     this.load.image("cuadrado", "../public/assets/square.png");
     this.load.image("rombo", "../public/assets/diamond.png");
-    this.load.image("bomb", "../public/assets/Bomba Vector Icono PNG ,dibujos  Iconos De Bomba, Bomba, Explosión PNG y Vector para Descargar Gratis _ Pngtree.jpg");
+    this.load.image("bomb", "../public/assets/bomb_PNG38.png");
   }
 
   create() {
