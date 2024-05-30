@@ -33,7 +33,7 @@ export default class Game extends Phaser.Scene {
     this.load.image("triangulo", "../public/assets/triangle.png");
     this.load.image("cuadrado", "../public/assets/square.png");
     this.load.image("rombo", "../public/assets/diamond.png");
-    this.load.image("bomb", "../public/assets/bomb_PNG38.png");
+    this.load.image("bomb", "../public/assets/R.png");
   }
 
   create() {
