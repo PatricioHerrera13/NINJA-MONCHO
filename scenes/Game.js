@@ -76,7 +76,7 @@ export default class Game extends Phaser.Scene {
     this.scoreText = this.add.text(
       10,
       50,
-      `Score: ${this.score}
+      `TotalScore: ${this.score}
         T: ${this.shapes["triangle"].count}
         S: ${this.shapes["square"].count}
         D: ${this.shapes["diamond"].count}`
@@ -152,7 +152,7 @@ export default class Game extends Phaser.Scene {
     console.log("Score ", this.score);
     collectible.destroy();
     this.scoreText.setText(
-      `Score: ${this.score}
+      `TotalScore: ${this.score}
         T: ${this.shapes["triangle"].count}
         S: ${this.shapes["square"].count}
         D: ${this.shapes["diamond"].count}`
