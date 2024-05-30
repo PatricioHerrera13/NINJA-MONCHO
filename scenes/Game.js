@@ -2,8 +2,6 @@
 
 export default class Game extends Phaser.Scene {
   constructor() {
-    // key of the scene
-    // the key will be used to start the scene by other scenes
     super("main");
   }
 
@@ -12,40 +10,42 @@ export default class Game extends Phaser.Scene {
     this.timer = 30;
     this.score = 0;
     this.shapes = {
-      triangulo: { points: 10, count:0},
-      cuadrado: { points: 20, count:0},
-      rombo: { points: 30, count:0},
+      triangulo: { points: 10, count: 0 },
+      cuadrado: { points: 20, count: 0 },
+      rombo: { points: 30, count: 0 },
+      bomb: { points: -10, count: 0 },
     };
   }
 
   preload() {
-    ///cargar assets 
+    //cargar assets
 
     //import Cielo
-    this.load.image ("cielo","../public/assets/Cielo.webp");
+    this.load.image("cielo", "../public/assets/Cielo.webp");
 
-    //import plataform
-    this.load.image ("plataforma","../public/assets/platform.png");
+    //import plataforma
+    this.load.image("plataforma", "../public/assets/platform.png");
 
     //import personaje
-    this.load.image ("personaje","../public/assets/Ninja.png");
+    this.load.image("personaje", "../public/assets/Ninja.png");
 
-    //crear grupo y asignar imagenes
+    // importar recolectable
     this.load.image("triangulo", "../public/assets/triangle.png");
     this.load.image("cuadrado", "../public/assets/square.png");
     this.load.image("rombo", "../public/assets/diamond.png");
+    this.load.image("bomb", "../public/assets/Bomba Vector Icono PNG ,dibujos  Iconos De Bomba, Bomba, Explosión PNG y Vector para Descargar Gratis _ Pngtree.jpg");
   }
 
   create() {
-    //cargar elementos
+    // crear elementos
     this.cielo = this.add.image(400, 300, "cielo");
     this.cielo.setScale(2);
 
-    //cargar grupo plataforma
+    // crear grupa plataformas
     this.plataformas = this.physics.add.staticGroup();
-    //cargar al grupo de plataformas agregar una plataforma
-    this.plataformas.create(400, 560, "plataforma").setScale(2).refreshBody();
-    //agregar otra plataforma en otro lugar
+    // al grupo de plataformas agregar una plataforma
+    this.plataformas.create(400, 568, "plataforma").setScale(2).refreshBody();
+    // agregamos otra plataforma en otro lugar
     this.plataformas.create(200, 400, "plataforma");
 
     //crear personaje
@@ -55,11 +55,16 @@ export default class Game extends Phaser.Scene {
 
     //agregar colision entre personaje y plataforma
     this.physics.add.collider(this.personaje, this.plataformas);
+    //una tecla a la vez
+    //this.w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+    //this.a = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+    //this.s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+    //this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 
-    //crgarar teclas
+    //crear teclas
     this.cursor = this.input.keyboard.createCursorKeys();
 
-    //cargar grupo recolectables
+    // crear grupo recolectables
     this.recolectables = this.physics.add.group();
 
     // evento 1 segundo
@@ -69,8 +74,8 @@ export default class Game extends Phaser.Scene {
       callbackScope: this,
       loop: true,
     });
-    
-    //add tecla r 
+
+    // add tecla r
     this.r = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
 
     // evento 1 segundo
@@ -80,9 +85,9 @@ export default class Game extends Phaser.Scene {
       callbackScope: this,
       loop: true,
     });
-    
-    //agergar texto de timer en la esquina superior derecha
-    this.timerText = this.add.text (10, 10, `tiempo restante: ${this.timer}`,{
+
+    //agregar texto de timer en la esquina superior derecha
+    this.timerText = this.add.text(10, 10, `tiempo restante: ${this.timer}`, {
       fontSize: "32px",
       fill: "#fff",
     });
@@ -91,11 +96,11 @@ export default class Game extends Phaser.Scene {
       10,
       50,
       `Puntaje: ${this.score}
-      T: ${this.shapes["triangulo"].count}
-      C: ${this.shapes["cuadrado"].count}
-      R: ${this.shapes["rombo"].count}`
+        T: ${this.shapes["triangulo"].count}
+        C: ${this.shapes["cuadrado"].count}
+        R: ${this.shapes["rombo"].count}`
     );
-   
+
     //agregar collider entre recolectables y personaje
     this.physics.add.collider(
       this.personaje,
@@ -104,13 +109,22 @@ export default class Game extends Phaser.Scene {
       null,
       this
     );
+
+    //agregar collider entre recolectables y plataformas
+    this.physics.add.collider(
+      this.recolectables,
+      this.plataformas,
+      this.onRecolectableBounced,
+      null,
+      this
+    );
   }
 
   update() {
-    if (this.gameOver  && this.recolectables.isDown){
+    if (this.gameOver && this.r.isDown) {
       this.scene.restart();
     }
-    if (this.gameOver){
+    if (this.gameOver) {
       this.physics.pause();
       this.timerText.setText("Game Over");
       return;
@@ -128,12 +142,13 @@ export default class Game extends Phaser.Scene {
     }
   }
 
-  onSecond () {
-    if (this.gameOver){
+  onSecond() {
+    if (this.gameOver) {
       return;
     }
-    //crear recolectable
-    const tipos = ["triangulo","cuadrado","rombo"];
+    // crear recolectable
+    const tipos = ["triangulo", "cuadrado", "rombo", "bomb"];
+
     const tipo = Phaser.Math.RND.pick(tipos);
     let recolectable = this.recolectables.create(
       Phaser.Math.Between(10, 790),
@@ -141,44 +156,54 @@ export default class Game extends Phaser.Scene {
       tipo
     );
     recolectable.setVelocity(0, 100);
+
+    //asignar rebote: busca un numero entre 0.4 y 0.8
+    const rebote = Phaser.Math.FloatBetween(0.4, 0.8);
+    recolectable.setBounce(rebote);
+
+    //set data
+    recolectable.setData("points", this.shapes[tipo].points);
+    recolectable.setData("tipo", tipo);
   }
 
-  onShapeCollect (personaje, recolectable) {
-    console.log("recolectado", recolectable.texture.key);
-    const nombreFig = recolectable.texture.key;
+  onShapeCollect(personaje, recolectable) {
+    const nombreFig = recolectable.getData("tipo");
+    const points = recolectable.getData("points");
 
-    this.score += this.shapes[nombreFig].points;
+    this.score += points;
+
     this.shapes[nombreFig].count += 1;
 
     console.table(this.shapes);
-    console.log("score", this.score);
+    console.log("recolectado ", recolectable.texture.key, points);
+    console.log("score ", this.score);
     recolectable.destroy();
-    //recolectable.disbleBody(true, true);
+    //recolectable.disableBody(true, true);
 
     this.scoreText.setText(
       `Puntaje: ${this.score}
-      T: ${this.shapes["triangulo"].count}
-      C: ${this.shapes["cuadrado"].count}
-      R: ${this.shapes["rombo"].count}`
+        T: ${this.shapes["triangulo"].count}
+        C: ${this.shapes["cuadrado"].count}
+        R: ${this.shapes["rombo"].count}`
     );
 
-    this.chechWin();
+    this.checkWin();
   }
 
-  chechWin(){
-      const cumplePuntos = this.score >= 100;
-      const cumpleFiguras =
-        this.shapes["triangulo"].count >= 2 &&
-        this.shapes["cuadrado"].count >= 2 &&
-        this.shapes["rombo"].count >= 2;
+  checkWin() {
+    const cumplePuntos = this.score >= 100;
+    const cumpleFiguras =
+      this.shapes["triangulo"].count >= 2 &&
+      this.shapes["cuadrado"].count >= 2 &&
+      this.shapes["rombo"].count >= 2;
 
     if (cumplePuntos && cumpleFiguras) {
       console.log("Ganaste");
-      this.scene.start("end",{
+      this.scene.start("end", {
         score: this.score,
         gameOver: this.gameOver,
       });
-    } 
+    }
   }
 
   handlerTimer() {
@@ -190,6 +215,16 @@ export default class Game extends Phaser.Scene {
         score: this.score,
         gameOver: this.gameOver,
       });
+    }
+  }
+
+  onRecolectableBounced(recolectable, plataforma) {
+    console.log("recolectable rebote");
+    let points = recolectable.getData("points");
+    points -= 5;
+    recolectable.setData("points", points);
+    if (points <= 0) {
+      recolectable.destroy();
     }
   }
 }
