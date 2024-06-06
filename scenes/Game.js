@@ -18,57 +18,40 @@ export default class Game extends Phaser.Scene {
   }
 
   preload() {
-    // Load assets
-    // Import Sky
-    this.load.image("sky", "../public/assets/Cielo.webp");
-    // Import Platform
-    this.load.image("platform", "../public/assets/platform.png");
-    // Import Character
-    this.load.image("character", "../public/assets/Ninja.png");
-    // Import Collectibles
-    this.load.image("triangle", "../public/assets/triangle.png");
-    this.load.image("square", "../public/assets/square.png");
-    this.load.image("diamond", "../public/assets/diamond.png");
-    this.load.image("bomb", "../public/assets/R.png");
+    this.load.image("sky", "./public/assets/Cielo.webp");
+    this.load.image("platform", "./public/assets/platform.png");
+    this.load.image("character", "./public/assets/Ninja.png");
+    this.load.image("triangle", "./public/assets/triangle.png");
+    this.load.image("square", "./public/assets/square.png");
+    this.load.image("diamond", "./public/assets/diamond.png");
+    this.load.image("bomb", "./public/assets/R.png");
   }
 
   create() {
-    // Create elements
     this.sky = this.add.image(400, 300, "sky");
     this.sky.setScale(2);
-    // Create platforms group
     this.platforms = this.physics.add.staticGroup();
-    // Add a platform to the group
     this.platforms.create(400, 568, "platform").setScale(2).refreshBody();
-    // Add another platform at a different position
     this.platforms.create(200, 400, "platform");
-    // Create character
     this.character = this.physics.add.sprite(400, 300, "character");
     this.character.setScale(0.1);
     this.character.setCollideWorldBounds(true);
-    // Add collision between character and platform
     this.physics.add.collider(this.character, this.platforms);
-    // Create cursor keys
     this.cursors = this.input.keyboard.createCursorKeys();
-    // Create collectibles group
     this.collectibles = this.physics.add.group();
-    // 1-second event
     this.time.addEvent({
       delay: 1000,
       callback: this.onSecond,
       callbackScope: this,
       loop: true,
     });
-    // Add 'R' key
     this.rKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
-    // 1-second event for timer
     this.time.addEvent({
       delay: 1000,
       callback: this.handleTimer,
       callbackScope: this,
       loop: true,
     });
-    // Add timer text in the top-right corner
     this.timerText = this.add.text(10, 10, `Time left: ${this.timer}`, {
       fontSize: "32px",
       fill: "#fff",
@@ -81,7 +64,6 @@ export default class Game extends Phaser.Scene {
         S: ${this.shapes["square"].count}
         D: ${this.shapes["diamond"].count}`
     );
-    // Add collider between collectibles and character
     this.physics.add.collider(
       this.character,
       this.collectibles,
@@ -89,7 +71,6 @@ export default class Game extends Phaser.Scene {
       null,
       this
     );
-    // Add collider between collectibles and platforms
     this.physics.add.collider(
       this.collectibles,
       this.platforms,
@@ -108,7 +89,6 @@ export default class Game extends Phaser.Scene {
       this.timerText.setText("Game Over");
       return;
     }
-    // Character movement
     if (this.cursors.left.isDown) {
       this.character.setVelocityX(-160);
     } else if (this.cursors.right.isDown) {
@@ -125,7 +105,6 @@ export default class Game extends Phaser.Scene {
     if (this.gameOver) {
       return;
     }
-    // Create collectible
     const types = ["triangle", "square", "diamond", "bomb"];
     const type = Phaser.Math.RND.pick(types);
     let collectible = this.collectibles.create(
@@ -134,10 +113,8 @@ export default class Game extends Phaser.Scene {
       type
     );
     collectible.setVelocity(0, 100);
-    // Set bounce: find a number between 0.4 and 0.8
     const bounce = Phaser.Math.FloatBetween(0.4, 0.8);
     collectible.setBounce(bounce);
-    // Set data
     collectible.setData("points", this.shapes[type].points);
     collectible.setData("type", type);
   }
